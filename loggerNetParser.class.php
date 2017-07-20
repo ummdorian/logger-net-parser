@@ -95,6 +95,27 @@
             }
         }
 
+        // Generate formatted array of a time collumn
+        function generateFormattedTimeCollumnArray($collumnIndex=0,$timeFormat='g:ia',$timeInputFormat='Y-m-d H:i:s',$range=''){
+            if(count($this->parsedDataRows) && is_numeric($collumnIndex)){
+                $thisCollumn = array_column($this->parsedDataRows,$collumnIndex);
+
+                foreach($thisCollumn as $timeIndex => $timeString){
+                    if(DateTime::createFromFormat($timeInputFormat, $timeString)){
+                        $thisCollumn[$timeIndex] = date($timeFormat,DateTime::createFromFormat($timeInputFormat, $timeString)->getTimestamp());
+                    }
+                }
+
+                // if a range is set return just that portion
+                if(is_array($range)){
+                    return array_slice($thisCollumn,$range[0],$range[1]-$range[0]);
+                }
+                // return entire formatted collumn
+                else{
+                    return $thisCollumn;
+                }
+            }
+        }
 
         // Generate json for a collumn and format it
         function generateFormattedTimeCollumnJson($collumnIndex=0,$timeFormat='g:ia',$timeInputFormat='Y-m-d H:i:s',$range=''){
@@ -126,6 +147,13 @@
             }
         }
 
+        // Returns max value in collumn
+        function getCollumnMin($collumnIndex){
+            if(count($this->parsedDataRows) && is_numeric($collumnIndex)){
+                return min(array_column($this->parsedDataRows,$collumnIndex));
+            }
+        }
+
 
         // Returns range of row indexes from last decent
         function getIndexRangeOfLastWinchDecent($timeCollumnIndex=0,$timeInputFormat='Y-m-d H:i:s'){
@@ -152,7 +180,32 @@
             }
         }
 
+        function getIndexRangeArrayOfWinchDecents($timeCollumnIndex=0,$timeInputFormat='Y-m-d H:i:s'){
 
+            // if the we're in a position to make this calculation
+            if(count($this->parsedDataRows) && is_numeric($timeCollumnIndex)){
+
+                // get time collumn
+                $timeCollumn = array_column($this->parsedDataRows,$timeCollumnIndex);
+
+                $decents = array();
+
+                foreach($timeCollumn as $timeIndexInCollumn => $timeString){
+                    $thisDecentTimeIdentifier = date('n/d/y H',DateTime::createFromFormat($timeInputFormat, $timeString)->getTimestamp());
+                    // If this is a new decent from the last row
+                    if(!isset($decents[$thisDecentTimeIdentifier])){
+                        // Set the start of this range
+                        $decents[$thisDecentTimeIdentifier] = array($timeIndexInCollumn);
+                    }
+                    // Set end of this decent to this index, which will get overwritten if there's another
+                    $decents[$thisDecentTimeIdentifier][1] = $timeIndexInCollumn;
+                }
+
+                return $decents;
+
+            }
+
+        }
 
     }
 
